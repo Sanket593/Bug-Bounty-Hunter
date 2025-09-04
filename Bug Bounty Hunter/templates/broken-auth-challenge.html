@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Broken Auth Challenge Platform | TryHackMe Style</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #d53f8c;
+      --primary-light: #ed64a6;
+      --secondary: #f6ad55;
+      --dark: #121230;
+      --darker: #0a0a1a;
+      --light: #f0f0ff;
+      --border: rgba(255, 255, 255, 0.1);
+      --glass: rgba(20, 20, 40, 0.6);
+      --success: #4caf50;
+      --warning: #ff9800;
+      --danger: #f44336;
+      --info: #2196f3;
+      --easy: #4CAF50;
+      --medium: #FF9800;
+      --hard: #F44336;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0a0a1a, #1a1a40);
+      color: #f0f0ff;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+      line-height: 1.6;
+    }
+    
+    /* Background Elements */
+    .background-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      z-index: -1;
+      opacity: 0.15;
+    }
+    
+    .blob1 {
+      width: 500px;
+      height: 500px;
+      background: var(--primary);
+      top: -200px;
+      left: -200px;
+    }
+    
+    .blob2 {
+      width: 600px;
+      height: 600px;
+      background: var(--secondary);
+      bottom: -300px;
+      right: -200px;
+    }
+    
+    /* Navigation */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.2rem 5%;
+      background: rgba(10, 10, 30, 0.8);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+    
+    .logo i {
+      color: var(--primary-light);
+    }
+    
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+    }
+    
+    .nav-links a {
+      color: var(--light);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s;
+      position: relative;
+      font-size: 1.1rem;
+    }
+    
+    .nav-links a:hover {
+      color: var(--primary-light);
+    }
+    
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--primary-light);
+      transition: width 0.3s;
+    }
+    
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+    
+    /* Hero Section */
+    .hero {
+      padding: 4rem 5% 3rem;
+      text-align: center;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    
+    .hero h1 {
+      font-size: 3.5rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(to right, var(--primary-light), var(--secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    
+    .hero p {
+      font-size: 1.4rem;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 2rem;
+    }
+    
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin: 2rem 0;
+      flex-wrap: wrap;
+    }
+    
+    .stat-card {
+      background: rgba(213, 63, 140, 0.2);
+      border: 1px solid var(--primary);
+      border-radius: 10px;
+      padding: 1.2rem 2rem;
+      text-align: center;
+    }
+    
+    .stat-card .number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--primary-light);
+    }
+    
+    .stat-card .label {
+      font-size: 1.1rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    /* Search */
+    .search-container {
+      max-width: 700px;
+      margin: 2rem auto;
+      background: rgba(20, 20, 40, 0.6);
+      border-radius: 50px;
+      padding: 0.5rem;
+      display: flex;
+      border: 1px solid var(--border);
+    }
+    
+    .search-container input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 1rem 1.5rem;
+      color: white;
+      font-size: 1.1rem;
+    }
+    
+    .search-container input:focus {
+      outline: none;
+    }
+    
+    .search-container button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0 2rem;
+      border-radius: 50px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: background 0.3s;
+    }
+    
+    .search-container button:hover {
+      background: #b83280;
+    }
+    
+    /* Filters */
+    .filters {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin: 1.5rem 0;
+      flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border);
+      color: rgba(255, 255, 255, 0.7);
+      padding: 0.7rem 1.5rem;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .filter-btn:hover, .filter-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    
+    /* Challenge Categories */
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+    
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .section-header h2 {
+      font-size: 2rem;
+      color: var(--primary-light);
+    }
+    
+    .section-header a {
+      color: var(--secondary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .challenge-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+    
+    .challenge-card {
+      background: rgba(20, 20, 40, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      overflow: hidden;
+      transition: transform 0.3s, box-shadow 0.3s;
+      cursor: pointer;
+    }
+    
+    .challenge-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    .card-header {
+      padding: 1.5rem;
+      background: rgba(213, 63, 140, 0.2);
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .card-body {
+      padding: 1.5rem;
+    }
+    
+    .card-body p {
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 1rem;
+      min-height: 60px;
+    }
+    
+    .card-footer {
+      padding: 1rem 1.5rem;
+      background: rgba(0, 0, 0, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .difficulty {
+      display: inline-block;
+      padding: 0.4rem 1rem;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    
+    .difficulty.easy {
+      background: rgba(76, 175, 80, 0.2);
+      color: var(--easy);
+      border: 1px solid var(--easy);
+    }
+    
+    .difficulty.medium {
+      background: rgba(255, 152, 0, 0.2);
+      color: var(--medium);
+      border: 1px solid var(--medium);
+    }
+    
+    .difficulty.hard {
+      background: rgba(244, 67, 54, 0.2);
+      color: var(--hard);
+      border: 1px solid var(--hard);
+    }
+    
+    .time {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    /* Featured Challenge */
+    .featured-challenge {
+      background: linear-gradient(135deg, #1a1a40, #702459);
+      border-radius: 15px;
+      overflow: hidden;
+      margin: 3rem 0;
+      display: flex;
+      border: 1px solid var(--primary);
+    }
+    
+    .featured-content {
+      flex: 1;
+      padding: 2.5rem;
+    }
+    
+    .featured-content h2 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--primary-light);
+    }
+    
+    .featured-content p {
+      font-size: 1.2rem;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 1.5rem;
+    }
+    
+    .featured-image {
+      flex: 1;
+      background: url('https://images.unsplash.com/photo-1600132806608-446446ba3088?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80') center/cover;
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 0.9rem 2rem;
+      background: linear-gradient(to right, var(--primary), var(--primary-light));
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+      text-decoration: none;
+    }
+    
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(237, 100, 166, 0.4);
+    }
+    
+    .btn:active {
+      transform: translateY(-1px);
+    }
+    
+    /* Footer */
+    footer {
+      background: rgba(10, 10, 30, 0.8);
+      padding: 3rem 5%;
+      margin-top: 3rem;
+      border-top: 1px solid var(--border);
+    }
+    
+    .footer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+    }
+    
+    .footer-column h3 {
+      color: var(--primary-light);
+      margin-bottom: 1.5rem;
+      font-size: 1.4rem;
+    }
+    
+    .footer-column ul {
+      list-style: none;
+    }
+    
+    .footer-column li {
+      margin-bottom: 0.8rem;
+    }
+    
+    .footer-column a {
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    
+    .footer-column a:hover {
+      color: var(--primary-light);
+    }
+    
+    .copyright {
+      text-align: center;
+      padding-top: 2rem;
+      margin-top: 2rem;
+      border-top: 1px solid var(--border);
+      color: rgba(255, 255, 255, 0.5);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+      
+      .hero h1 {
+        font-size: 2.5rem;
+      }
+      
+      .featured-challenge {
+        flex-direction: column;
+      }
+      
+      .featured-image {
+        height: 250px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Background Elements -->
+  <div class="background-blob blob1"></div>
+  <div class="background-blob blob2"></div>
+  
+  <!-- Navigation -->
+  <nav>
+    <div class="logo">
+      <i class="fas fa-user-shield"></i>
+      <span>AuthDojo</span>
+    </div>
+    <div class="nav-links">
+      <a href="#">Learn</a>
+      <a href="#">Challenges</a>
+      <a href="#">Leaderboard</a>
+      <a href="#">Resources</a>
+      <a href="#">Shop</a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <h1>Break Authentication</h1>
+    <p>Practice exploiting flawed authentication mechanisms in a safe, controlled environment</p>
+    
+    <div class="stats">
+      <div class="stat-card">
+        <div class="number">87</div>
+        <div class="label">Easy Challenges</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">115</div>
+        <div class="label">Medium Challenges</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">52</div>
+        <div class="label">Hard Challenges</div>
+      </div>
+    </div>
+    
+    <div class="search-container">
+      <input type="text" placeholder="Find auth challenges...">
+      <button><i class="fas fa-search"></i> Search</button>
+    </div>
+    
+    <div class="filters">
+      <div class="filter-btn">Type</div>
+      <div class="filter-btn">Sort by</div>
+      <div class="filter-btn active">Difficulty</div>
+      <div class="filter-btn">Status</div>
+      <div class="filter-btn">Auth Type</div>
+    </div>
+  </section>
+
+  <!-- Featured Challenge -->
+  <div class="container">
+    <div class="featured-challenge">
+      <div class="featured-content">
+        <h2>Bank Account Takeover</h2>
+        <p>Exploit multiple authentication flaws to compromise user accounts and transfer funds.</p>
+        <p>Practice credential stuffing, session hijacking, and MFA bypass in this realistic banking scenario.</p>
+        <button class="btn">Log in and Play Now</button>
+      </div>
+      <div class="featured-image"></div>
+    </div>
+    
+    <!-- 5-Minute Auth Hacks -->
+    <div class="section-header">
+      <h2>5-Minute Auth Hacks</h2>
+      <a href="#">Show More <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <p style="color: rgba(255,255,255,0.7); margin-bottom: 1.5rem;">Quick wins with straightforward authentication vulnerabilities. Perfect for beginners.</p>
+    
+    <div class="challenge-grid">
+      <div class="challenge-card">
+        <div class="card-header">
+          <h3>Default Creds</h3>
+        </div>
+        <div class="card-body">
+          <p>Use default credentials to gain access to an admin panel.</p>
+        </div>
+        <div class="card-footer">
+          <span class="difficulty easy">Easy</span>
+          <span class="time"><i class="far fa-clock"></i> 2 mins</span>
+        </div>
+      </div>
+      
+      <div class="challenge-card">
+        <div class="card-header">
+          <h3>Password Reset</h3>
+        </div>
+        <div class="card-body">
+          <p>Exploit a flawed password reset mechanism to take over an account.</p>
+        </div>
+        <div class="card-footer">
+          <span class="difficulty easy">Easy</span>
+          <span class="time"><i class="far fa-clock"></i> 5 mins</span>
+        </div>
+      </div>
+      
+      <div class="challenge-card">
+        <div class="card-header">
+          <h3>Session ID</h3>
+        </div>
+        <div class="card-body">
+          <p>Hijack a session by predicting or brute-forcing session tokens.</p>
+        </div>
+        <div class="card-footer">
+          <span class="difficulty easy">Easy</span>
+          <span class="time"><i class="far fa-clock"></i> 5 mins</span>
+        </div>
+      </div>
+      
+      <div class="challenge-card">
+        <div class="card-header">
+          <h3>Verbose Error</h3>
+        </div>
+        <div class="card-body">
+          <p>Use verbose error messages to enumerate valid usernames.</p>
+        </div>
+        <div class="card-footer">
+          <span class="difficulty easy">Easy</span>
+          <span class="time"><i class="far fa-clock"></i> 3 mins</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Easy Challenges -->
+    <div class="section-header">
+      <h2>Easy Auth Challenges</h2>
+      <a href="#">Show More <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <p style="color: rgba(255,255,255,0.7); margin-bottom: 1.5rem;">Straightforward authentication vulnerabilities with minimal protection.</p>
+    
+    <div class="challenge-grid">
+      <div class="challenge-card">
+        <div class="card-header">
+          <h3>Brute Force</h3>
+        </div>
+        <div class="card-body">
+          <p>Bypass rate limiting to brute force a weak password.</p>
+        </div>
+        <div class="card-footer">
+          <span class="difficulty easy">Easy</span>
+          <span class="time"><i class="far fa-clock"></i> 15 mins</span>
+        </div>
+      </div>
+      
+      <div class="challenge-card">
+        <div class="card-header">
+          <h3>Credential Stuffing</h3>
+        </div>
+        <div class="card-body">
+          <p>Use leaked credentials to gain unauthorized access.</p>
+        </div>
+        <div class="card-footer">
+          <span class="difficulty easy">Easy</span>
+          <span class="time"><i class="far fa-clock"></i> 20 mins</span>
+        </div>
+      </div>
+      
+      <div class="challenge-card">
+        <div class="card-header">
+          <h3>Session Fixation</h3>
+        </div>
+        <div class="card-body">
+          <p>Fixate a session ID before authentication to hijack the session.</p>
+        </div>
+        <div class="card-footer">
+          <span class="difficulty easy">Easy</span>
+          <span class="time"><i class="far fa-clock"></i> 15 mins</span>
+        </div>
+      </div>
+      
+      <div class="challenge-card">
+        <div class="card-header">
+          <h3>URL Token</h3>
+        </div>
+        <div class="card-body">
+          <p>Exploit authentication tokens passed in URLs.</p>
+        </div>
+        <div class="card-footer">
+          <span class="difficulty easy">Easy</span>
+          <span class="time"><i class="far fa-clock"></i> 10 mins</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Medium Challenges -->
+    <div class="section-header">
+      <h2>Medium Auth Challenges</h2>
+      <a href="#">Show More <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <p style="color: rgba(255,255,255,0.7); margin-bottom: 1.5rem;">More complex scenarios with basic protection mechanisms to bypass.</p>
+    
+    <div class="challenge-grid">
+      <div class="challenge-card">
+        <div class="card-header">
+          <h3>JWT Manipulation</h3>
+        </div>
+        <div class="card-body">
+          <p>Modify JWT tokens to escalate privileges.</p>
+        </div>
+        <div class="card-footer">
+          <span class="difficulty medium">Medium</span>
+          <span class="time"><i class="far fa-clock"></i> 45 mins</span>
+        </div>
+      </div>
+      
+      <div class="challenge-card">
+        <div class="card-header">
+          <h3>OAuth Misconfig</h3>
+        </div>
+        <div class="card-body">
+          <p>Exploit OAuth implementation flaws to gain unauthorized access.</p>
+        </div>
+        <div class="card-footer">
+          <span class="difficulty medium">Medium</span>
+          <span class="time"><i class="far fa-clock"></i> 60 mins</span>
+        </div>
+      </div>
+      
+      <div class="challenge-card">
+        <div class="card-header">
+          <h3>2FA Bypass</h3>
+        </div>
+        <div class="card-body">
+          <p>Bypass two-factor authentication through various techniques.</p>
+        </div>
+        <div class="card-footer">
+          <span class="difficulty medium">Medium</span>
+          <span class="time"><i class="far fa-clock"></i> 75 mins</span>
+        </div>
+      </div>
+      
+      <div class="challenge-card">
+        <div class="card-header">
+          <h3>Password Policy</h3>
+        </div>
+        <div class="card-body">
+          <p>Exploit weak password policies to compromise accounts.</p>
+        </div>
+        <div class="card-footer">
+          <span class="difficulty medium">Medium</span>
+          <span class="time"><i class="far fa-clock"></i> 30 mins</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Hard Challenges -->
+    <div class="section-header">
+      <h2>Hard Auth Challenges</h2>
+      <a href="#">Show More <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <p style="color: rgba(255,255,255,0.7); margin-bottom: 1.5rem;">Advanced scenarios with strong protections and complex exploitation chains.</p>
+    
+    <div class="challenge-grid">
+      <div class="challenge-card">
+        <div class="card-header">
+          <h3>SSO Exploit</h3>
+        </div>
+        <div class="card-body">
+          <p>Exploit vulnerabilities in a Single Sign-On implementation.</p>
+        </div>
+        <div class="card-footer">
+          <span class="difficulty hard">Hard</span>
+          <span class="time"><i class="far fa-clock"></i> 120 mins</span>
+        </div>
+      </div>
+      
+      <div class="challenge-card">
+        <div class="card-header">
+          <h3>Biometric Bypass</h3>
+        </div>
+        <div class="card-body">
+          <p>Bypass biometric authentication through various techniques.</p>
+        </div>
+        <div class="card-footer">
+          <span class="difficulty hard">Hard</span>
+          <span class="time"><i class="far fa-clock"></i> 90 mins</span>
+        </div>
+      </div>
+      
+      <div class="challenge-card">
+        <div class="card-header">
+          <h3>Passwordless Auth</h3>
+        </div>
+        <div class="card-body">
+          <p>Exploit flaws in a passwordless authentication system.</p>
+        </div>
+        <div class="card-footer">
+          <span class="difficulty hard">Hard</span>
+          <span class="time"><i class="far fa-clock"></i> 150 mins</span>
+        </div>
+      </div>
+      
+      <div class="challenge-card">
+        <div class="card-header">
+          <h3>Chain Exploit</h3>
+        </div>
+        <div class="card-body">
+          <p>Chain multiple auth vulnerabilities to compromise an admin account.</p>
+        </div>
+        <div class="card-footer">
+          <span class="difficulty hard">Hard</span>
+          <span class="time"><i class="far fa-clock"></i> 180 mins</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-grid">
+      <div class="footer-column">
+        <h3>Learning</h3>
+        <ul>
+          <li><a href="#">Auth Fundamentals</a></li>
+          <li><a href="#">Session Management</a></li>
+          <li><a href="#">Password Attacks</a></li>
+          <li><a href="#">Multi-Factor Auth</a></li>
+          <li><a href="#">OAuth/SSO</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-column">
+        <h3>Resources</h3>
+        <ul>
+          <li><a href="#">Cheat Sheets</a></li>
+          <li><a href="#">Password Lists</a></li>
+          <li><a href="#">JWT Handbook</a></li>
+          <li><a href="#">OAuth Guide</a></li>
+          <li><a href="#">Auth Testing Tools</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-column">
+        <h3>Community</h3>
+        <ul>
+          <li><a href="#">Leaderboard</a></li>
+          <li><a href="#">Forums</a></li>
+          <li><a href="#">CTFs</a></li>
+          <li><a href="#">Contributors</a></li>
+          <li><a href="#">Blog</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-column">
+        <h3>Company</h3>
+        <ul>
+          <li><a href="#">About Us</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Contact</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Service</a></li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="copyright">
+      &copy; 2023 AuthDojo. For educational purposes only. All challenges are simulated in a safe environment.
+    </div>
+  </footer>
+
+  <script>
+    // Simple animation for challenge cards
+    document.querySelectorAll('.challenge-card').forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        card.style.transform = 'translateY(-10px)';
+        card.style.boxShadow = '0 15px 30px rgba(0, 0, 0, 0.4)';
+      });
+      
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'translateY(0)';
+        card.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.3)';
+      });
+    });
+    
+    // Filter button interaction
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
